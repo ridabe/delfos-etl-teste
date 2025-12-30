@@ -1,0 +1,10 @@
+fastapi==0.115.5
+uvicorn==0.32.0
+SQLAlchemy==2.0.36
+psycopg2-binary==2.9.10
+pandas==2.2.3
+httpx==0.27.2
+dagster==1.8.9
+dagster-webserver==1.8.9
+dagster-postgres==0.24.9
+

@@ -1,0 +1,100 @@
+version: "3.9"
+services:
+  postgres_source:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: source_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./source_init:/docker-entrypoint-initdb.d
+      - postgres_source_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d source_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres_target:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: target_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_target_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d target_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_source:5432/source_db
+    depends_on:
+      postgres_source:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  etl:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.etl
+    environment:
+      API_BASE_URL: http://api:8000
+      TARGET_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_target:5432/target_db
+      ETL_DATE: "2025-12-02"
+    depends_on:
+      api:
+        condition: service_started
+      postgres_target:
+        condition: service_healthy
+    command: ["python", "-m", "src.etl.etl", "--date", "${ETL_DATE}"]
+    restart: "no"
+
+  dagster_webserver:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dagster
+    environment:
+      API_BASE_URL: http://api:8000
+      TARGET_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_target:5432/target_db
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres_source:
+        condition: service_healthy
+      postgres_target:
+        condition: service_healthy
+      api:
+        condition: service_started
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-f", "src/dagster/repository.py"]
+    restart: on-failure
+
+  dagster_daemon:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dagster
+    environment:
+      API_BASE_URL: http://api:8000
+      TARGET_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_target:5432/target_db
+    depends_on:
+      postgres_source:
+        condition: service_healthy
+      postgres_target:
+        condition: service_healthy
+    command: ["dagster-daemon", "run"]
+    restart: on-failure
+
+volumes:
+  postgres_source_data:
+  postgres_target_data:
