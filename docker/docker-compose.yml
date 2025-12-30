@@ -87,6 +87,8 @@ services:
     environment:
       API_BASE_URL: http://api:8000
       TARGET_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_target:5432/target_db
+    volumes:
+      - ../src:/app/src
     depends_on:
       postgres_source:
         condition: service_healthy
