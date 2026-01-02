@@ -36,6 +36,25 @@ def ensure_signals(session, names):
 
 
 
+def load_data(session, day, rows):
+    if rows:        
+        # Define o intervalo do dia [00:00:00, 23:59:59.999...)
+        start_of_day = datetime.combine(day, datetime.min.time())
+        end_of_day = start_of_day + timedelta(days=1)
+        
+        # Deleta todos os registros desse intervalo
+        deleted_count = session.query(Data).filter(
+            Data.timestamp >= start_of_day,
+            Data.timestamp < end_of_day
+        ).delete(synchronize_session=False)
+        session.flush()
+        print(f"DEBUG: Deleted {deleted_count} rows for {day}", flush=True)
+        
+        # 2. INSERT via ORM Bulk
+        session.bulk_insert_mappings(Data, rows)
+        session.commit()
+        print(f"DEBUG: Inserted {len(rows)} rows for {day}", flush=True)
+
 def run(day_str, api_base_url=None, target_engine=None):
     if api_base_url is None:
         api_base_url = os.getenv("API_BASE_URL", "http://api:8000")
@@ -66,23 +85,7 @@ def run(day_str, api_base_url=None, target_engine=None):
                     "value": float(row["value"])
                 })
 
-        if rows:
-            # Define o intervalo do dia [00:00:00, 23:59:59.999...)
-            start_of_day = datetime.combine(day, datetime.min.time())
-            end_of_day = start_of_day + timedelta(days=1)
-            
-            # Deleta todos os registros desse intervalo
-            deleted_count = session.query(Data).filter(
-                Data.timestamp >= start_of_day,
-                Data.timestamp < end_of_day
-            ).delete(synchronize_session=False)
-            session.flush()
-            print(f"DEBUG: Deleted {deleted_count} rows for {day_str}", flush=True)
-            
-            # 2. INSERT via ORM Bulk
-            session.bulk_insert_mappings(Data, rows)
-            session.commit()
-            print(f"DEBUG: Inserted {len(rows)} rows for {day_str}", flush=True)
+        load_data(session, day, rows)
 
 def main():
     parser = argparse.ArgumentParser()
