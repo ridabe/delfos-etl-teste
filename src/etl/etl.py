@@ -1,5 +1,5 @@
 import os
-import argparse
+import argparse #ler comandos do terminal
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -11,6 +11,7 @@ class Signal(Base):
     __tablename__ = "signal"
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    #Exemplo: ID 1 = "wind_speed_mean_10m
 
 class Data(Base):
     __tablename__ = "data"
@@ -47,12 +48,25 @@ def run(day_str, api_base_url=None):
     if api_base_url is None:
         api_base_url = os.getenv("API_BASE_URL", "http://api:8000")
     day = datetime.fromisoformat(day_str).date()
+    # EXTRAI (Extract)
+    # Chama o helpers.py para pegar dados da API
     df = fetch_api(api_base_url, datetime.combine(day, datetime.min.time()))
+
+    # TRANSFORMA (Transform)
+    # Chama o helpers.py para calcular médias/min/max
     aggregates = aggregate_10m(df)
+
+     # CARREGA (Load)
     engine = get_engine()
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     with Session() as session:
+        # Idempotency: Remove dados existentes para o dia antes de inserir novos
+        start_ts = datetime.combine(day, datetime.min.time())
+        end_ts = datetime.combine(day, datetime.max.time())
+        session.query(Data).filter(Data.timestamp >= start_ts, Data.timestamp <= end_ts).delete()
+        session.commit()
+
         signal_map = ensure_signals(session, aggregates.keys())
         write_aggregates(session, signal_map, aggregates)
 

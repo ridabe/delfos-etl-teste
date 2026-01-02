@@ -19,6 +19,7 @@ WORKDIR /app
 
 # Copiar arquivo de configuração do Dagster
 COPY docker/dagster.yaml $DAGSTER_HOME/dagster.yaml
+COPY docker/workspace.yaml $DAGSTER_HOME/workspace.yaml
 
 # Copiar código fonte
 COPY src /app/src

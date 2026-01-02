@@ -70,6 +70,8 @@ services:
       TARGET_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres_target:5432/target_db
     ports:
       - "3000:3000"
+    volumes:
+      - ../src:/app/src
     depends_on:
       postgres_source:
         condition: service_healthy
@@ -77,7 +79,7 @@ services:
         condition: service_healthy
       api:
         condition: service_started
-    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-f", "src/dagster/repository.py"]
+    command: ["dagster-webserver", "-h", "0.0.0.0", "-p", "3000", "-w", "/opt/dagster/dagster_home/workspace.yaml"]
     restart: on-failure
 
   dagster_daemon:
@@ -94,7 +96,7 @@ services:
         condition: service_healthy
       postgres_target:
         condition: service_healthy
-    command: ["dagster-daemon", "run"]
+    command: ["dagster-daemon", "run", "-w", "/opt/dagster/dagster_home/workspace.yaml"]
     restart: on-failure
 
 volumes:

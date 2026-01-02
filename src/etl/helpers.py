@@ -11,6 +11,8 @@ def fetch_api(base_url: str, day: datetime) -> pd.DataFrame:
         resp = client.get(f"{base_url}/data", params=params, timeout=60)
         resp.raise_for_status()
         data = resp.json()
+        
+     # Transforma em DataFrame (Tabela do Pandas)   
     df = pd.DataFrame(data)
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df = df.set_index("timestamp").sort_index()

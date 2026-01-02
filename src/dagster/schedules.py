@@ -1,4 +1,6 @@
-from dagster import ScheduleDefinition
+from dagster import build_schedule_from_partitioned_job
 from .jobs import etl_job
 
-etl_schedule = ScheduleDefinition(job=etl_job, cron_schedule="*/1 * * * *")
+etl_schedule = build_schedule_from_partitioned_job(
+    job=etl_job,
+)
