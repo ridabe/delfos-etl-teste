@@ -29,6 +29,9 @@ Implementação de um pipeline ETL simplificado com dois bancos PostgreSQL (Font
   Dockerfile.etl
   /source_init
     init.sql
+/tests
+  conftest.py
+  test_etl_units.py
 requirements.txt
 README.md
 ```
@@ -92,6 +95,32 @@ O projeto inclui serviços configurados para rodar a interface visual e o daemon
    - `TARGET_DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5434/target_db`
 3. Na raiz do repo:
    - `dagster dev -f src/dagster/repository.py`
+
+## Testes Unitários
+
+O projeto inclui testes unitários automatizados utilizando `pytest` e fixtures para garantir a qualidade do código ETL. Os testes cobrem:
+- Agregação de dados (Pandas)
+- Criação e idempotência de sinais no banco
+- Lógica de idempotência na carga de dados (Delete/Insert)
+
+### Como executar via Docker (Recomendado)
+Para rodar os testes em um ambiente isolado (sem precisar instalar dependências locais):
+
+1. No diretório `docker`, execute:
+   ```bash
+   docker compose run --rm -v ${PWD}/../tests:/app/tests dagster_daemon pytest tests
+   ```
+   *Nota: No PowerShell do Windows, use `${PWD}/../tests`. No Linux/Mac, use `$(pwd)/../tests` ou caminho absoluto.*
+
+### Como executar localmente
+1. Instale as dependências de teste:
+   ```bash
+   pip install pytest
+   ```
+2. Na raiz do projeto, execute:
+   ```bash
+   pytest tests
+   ```
 
 ## Observações
 - O banco Alvo é criado via SQLAlchemy pelo ETL (`Base.metadata.create_all`).
