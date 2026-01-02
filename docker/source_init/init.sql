@@ -11,3 +11,11 @@ SELECT ts,
        100 + 200 * random(),
        15 + 10 * random()
 FROM generate_series('2025-12-01'::timestamp, '2025-12-10 23:59:00'::timestamp, interval '1 minute') ts;
+
+-- Dados extras de teste para 2026-01-01
+INSERT INTO data (timestamp, wind_speed, power, ambient_temprature)
+SELECT ts,
+       3 + 5 * random(),
+       100 + 200 * random(),
+       15 + 10 * random()
+FROM generate_series('2026-01-01 00:00:00'::timestamp, '2026-01-01 23:59:00'::timestamp, interval '1 minute') ts;

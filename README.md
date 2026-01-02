@@ -4,7 +4,8 @@
 Implementação de um pipeline ETL simplificado com dois bancos PostgreSQL (Fonte e Alvo), uma API FastAPI expondo dados do banco Fonte e um script ETL que consome a API via `httpx`, agrega em janelas de 10 minutos e grava no banco Alvo (SQLAlchemy). Opcionalmente, há orquestração com Dagster.
 
 ## Período dos Dados de Fonte
-- Período coberto: de `2025-12-01 00:00:00` até `2025-12-10 23:59:00` (10 dias consecutivos)
+- Período principal: de `2025-12-01 00:00:00` até `2025-12-10 23:59:00` (10 dias consecutivos)
+- Dados extras de teste: `2026-01-01` (dia completo)
 - Frequência: 1 minuto
 - Colunas: `timestamp`, `wind_speed`, `power`, `ambient_temprature`
 
